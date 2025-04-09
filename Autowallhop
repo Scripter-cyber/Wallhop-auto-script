@@ -1,1 +1,41 @@
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
 
+local player = Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoid = character:WaitForChild("Humanoid")
+local root = character:WaitForChild("HumanoidRootPart")
+
+-- GUI Setup
+local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
+gui.Name = "WallHopGUI"
+
+local button = Instance.new("TextButton")
+button.Size = UDim2.new(0, 120, 0, 40)
+button.Position = UDim2.new(0, 10, 0, 10)
+button.Text = "Wall Hop: OFF"
+button.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+button.TextColor3 = Color3.fromRGB(255, 255, 255)
+button.Parent = gui
+
+local wallHopEnabled = false
+
+button.MouseButton1Click:Connect(function()
+	wallHopEnabled = not wallHopEnabled
+	button.Text = wallHopEnabled and "Wall Hop: ON" or "Wall Hop: OFF"
+end)
+
+-- Wall Hop Logic
+RunService.RenderStepped:Connect(function()
+	if wallHopEnabled and humanoid:GetState() == Enum.HumanoidStateType.Freefall and UserInputService:IsKeyDown(Enum.KeyCode.Space) then
+		local rayParams = RaycastParams.new()
+		rayParams.FilterDescendantsInstances = {character}
+		rayParams.FilterType = Enum.RaycastFilterType.Blacklist
+
+		local result = workspace:Raycast(root.Position, root.CFrame.LookVector * 2, rayParams)
+		if result and result.Instance then
+			humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+		end
+	end
+end)
